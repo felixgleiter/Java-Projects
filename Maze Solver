@@ -1,0 +1,161 @@
+package felix.godfree.gentrack.maze.test;
+
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.Scanner;
+import java.util.ArrayList;
+
+public class Maze_Solver {
+	
+	public static void main(String[] args) throws IOException {
+		FileInputStream in = null;
+	
+		Scanner scFile = new Scanner(System.in);
+		System.out.println("Please enter the name of your maze file with its location here:");
+		String mazeName = scFile.next();
+		scFile.close();
+		
+		try {
+	        in = new FileInputStream(mazeName);
+	        Scanner sc = new Scanner(in);
+	        //Extracting the size, start and endpoints of the maze
+	        int columns = sc.nextInt();
+			int rows = sc.nextInt();
+			int start_column = sc.nextInt();
+			int start_row = sc.nextInt();
+			int end_column = sc.nextInt();
+			int end_row = sc.nextInt();
+			//Converting the maze into a 2-Dimensional Array
+			ArrayList<ArrayList<Integer>> maze = new ArrayList<ArrayList<Integer>>();
+			for (int i = 0; i < rows; i++) {
+				ArrayList<Integer> row = new ArrayList<Integer>();
+				for (int j = 0; j < columns; j++) {
+					row.add(sc.nextInt());
+				}
+				maze.add(row);
+			}
+			//Validating start and endpoints
+			if (maze.get(start_row).get(start_column) != 0 || maze.get(end_row).get(end_column) != 0) {
+				System.out.println("This maze is not solvable");
+			} else {
+				int current_row = start_row;
+				int current_column = start_column;
+				//Instantiating a path List to track the correct path through the maze
+				ArrayList<ArrayList<Integer>> path = new ArrayList<ArrayList<Integer>>();
+				ArrayList<Integer> start = new ArrayList<Integer>();
+				start.add(start_row);
+				start.add(start_column);
+				path.add(start);
+				path.add(start);
+				//This loop searches for a new adjacent space to move to that is not the previous space, if it
+				//finds a dead end, it moves backwards until there is a fork in the path
+				while (end_row - current_row != 0 || end_column - current_column != 0) {
+					ArrayList<Integer> next = new ArrayList<Integer>();
+					if (current_column == columns - 1
+						&& 0 == path.get(path.size() - 2).get(1)
+						&& maze.get(current_row).get(0) == 0
+						|| current_column != columns - 1
+						&& current_column + 1 != path.get(path.size() - 2).get(1)
+						&& maze.get(current_row).get(current_column + 1) == 0) {
+						current_column++;
+						if (current_column == columns) {
+							current_column = 0;
+						}
+						next.add(current_row);
+						next.add(current_column);
+						path.add(next);
+					} else if (current_row == rows - 1
+							&& 0 == path.get(path.size() - 2).get(0)
+							&& maze.get(0).get(current_column) == 0
+							|| current_row != rows - 1
+							&& current_row + 1 != path.get(path.size() - 2).get(0)
+							&& maze.get(current_row + 1).get(current_column) == 0) {
+						current_row++;
+						if (current_row == rows) {
+							current_row = 0;
+						}
+						next.add(current_row);
+						next.add(current_column);
+						path.add(next);
+					} else if (current_column == 0
+							&& columns - 1 == path.get(path.size() - 2).get(1)
+							&& maze.get(current_row).get(columns - 1) == 0
+							|| current_column != 0
+							&& current_column - 1 != path.get(path.size() - 2).get(1)
+							&& maze.get(current_row).get(current_column - 1) == 0) {
+						current_column--;
+						if (current_column == -1) {
+							current_column = columns - 1;
+						}
+						next.add(current_row);
+						next.add(current_column);
+						path.add(next);
+					} else if (current_row == 0
+							&& rows - 1 == path.get(path.size() - 2).get(0)
+							&& maze.get(rows - 1).get(current_column) == 0
+							|| current_row != 0
+							&& current_row - 1 != path.get(path.size() - 2).get(0)
+							&& maze.get(current_row - 1).get(current_column) == 0) {
+						current_row--;
+						if (current_row == -1) {
+							current_row = rows - 1;
+						}
+						next.add(current_row);
+						next.add(current_column);
+						path.add(next);
+					} else if (path.size() > 2) {
+						maze.get(current_row).set(current_column, 2);
+						path.remove(path.size() - 1);
+						current_row = path.get(path.size() - 1).get(0);
+						current_column = path.get(path.size() - 1).get(1);
+					} else {
+						System.out.println("This maze is not solvable");
+						break;
+					}
+					if (path.lastIndexOf(path.get(path.size() - 1)) != path.indexOf(path.get(path.size() - 1))) {
+						maze.get(current_row).set(current_column, 2);
+					}
+					System.out.println(path.get(path.size() - 1));
+				}
+				if (current_row == end_row && current_column == end_column) {
+					System.out.println("The Maze has been solved!");
+				}
+				//This loop transforms the 2D Array into the final string form that we return at the end of the main method
+				ArrayList<ArrayList<String>> final_maze = new ArrayList<ArrayList<String>>();
+				for (ArrayList<Integer> row : maze) {
+					ArrayList<String> final_row = new ArrayList<String>();
+					for (Integer i : row) {
+						if (i == 0 || i == 2) {
+							final_row.add(" ");
+						} else if (i == 1) {
+							final_row.add("#");
+						}
+					}
+					final_maze.add(final_row);
+				}
+				for (ArrayList<Integer> square : path) {
+					final_maze.get(square.get(0)).set(square.get(1), "X");
+				}
+				final_maze.get(start_row).set(start_column, "S");
+				final_maze.get(end_row).set(end_column, "E");
+				ArrayList<String> str_final_maze = new ArrayList<String>();
+				for (ArrayList<String> row: final_maze) {
+					String str_row = "";
+					for (String square: row) {
+						str_row += square;
+					}
+					str_final_maze.add(str_row);
+				}
+				for (int i = 0; i < str_final_maze.size(); i++) {
+					System.out.println(str_final_maze.get(i));
+				}
+			}
+	    } finally {
+	        if (in != null) {
+	            in.close();
+	        }
+	    }
+		
+	}
+
+}
